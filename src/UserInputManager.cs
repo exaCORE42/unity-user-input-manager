@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -142,7 +141,7 @@ public static class UserInputManager
     {
         if (actionMapName is null || actionMap is null)
         {
-            throw new NoNullAllowedException("An argument to SetActionMap is null!");
+            throw new NullReferenceException("An argument to SetActionMap is null!");
         }
         if (actionMaps.TryGetValue(actionMapName, out string oldActionMap))
         {
