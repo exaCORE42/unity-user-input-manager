@@ -649,7 +649,7 @@ public static class UserInputManager
 
     private static async Task ReconnectController()
     {
-        // wait for semaphore
+        // wait for reconnect semaphore
         await reconnectSemaphore.WaitAsync();
 
         // check if still needs to reconnect any controllers (just in case)
@@ -658,6 +658,9 @@ public static class UserInputManager
             reconnectSemaphore.Release();
             return;
         }
+
+        // wait for connectControllerSemaphore (wait for other controllers to finish connecting)
+        await connectControllerSemaphore.WaitAsync();
 
         // unpair every player input (prevent game from being interacted with while in repairing menu)
         UnpairEveryPlayerInput();
@@ -702,6 +705,7 @@ public static class UserInputManager
         {
             OnConnectInput += ControllerConnectorHandler;
         }
+        connectControllerSemaphore.Release();
         reconnectSemaphore.Release();
         CheckIfDone();
     }
