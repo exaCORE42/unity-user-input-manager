@@ -668,10 +668,12 @@ public static class UserInputManager
         ListenForConnectInput++;
         ClearOnConnectInputListeners();
 
-        // create new semaphore for
+        // create new semaphore to know when the current player has had a device reconnected
         SemaphoreSlim currentReconnectSemaphore = new(1, 1);
         currentReconnectSemaphore.Wait();
 
+        // create a new semaphore to indicate when the system is in a reconnect sequence, immediately acquire the semaphore
+        SemaphoreSlim inReconnectSequence = new(0, 1);
 
         while (playersToReconnect.Count > 0)
         {
@@ -683,6 +685,11 @@ public static class UserInputManager
 
             UserInputManager.OnConnectInput += async c =>
             {
+                // if already in reconnect sequence, disregard the input
+                if (!inReconnectSequence.Wait(0))
+                {
+                    return;
+                }
                 if (GenericConnectController(c, player))
                 {
                     Debug.Log($"Player {player} reconnected");
@@ -691,8 +698,12 @@ public static class UserInputManager
                     ClearOnConnectInputListeners();
                 }
             };
+            // allow the sequence to begin (start allowing inputs to reconnect)
+            inReconnectSequence.Release();
             await currentReconnectSemaphore.WaitAsync();
         }
+
+        inReconnectSequence.Dispose();
 
         currentReconnectSemaphore.Release();
         currentReconnectSemaphore.Dispose();
